@@ -75,4 +75,32 @@ w = .1 * randn( 1, number_of_bins+1 ); % +1 for bias, random initialization
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ADD CODE HERE TO LEARN PARAMETERS w
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+bias_column = ones(N,1);
+X = [bias_column X];
+
+learning_rate = 0.1;
+n_iterations = 10000;
+lambda = 0.1;
+
+
+for itr=1:10000
+    y_predicted = 1./(1 + exp(-1*(w*X')));
+%     if itr%100 == 0
+%         disp(y_predicted);
+%     end
+    output_diff = shape_labels - y_predicted;
+    loss_gradients = -1.0*sum(X.*output_diff');
+    regularization_loss = N*lambda*sign(w);
+    loss_gradients(1,2:number_of_bins+1) = loss_gradients(1,2:number_of_bins+1) + regularization_loss(1,2:number_of_bins+1);
+    w = w - learning_rate*loss_gradients;
+end
+
+y_predicted = 1./(1 + exp(-1*(w*X')));
+y_predicted(y_predicted<0.5) = 0;
+y_predicted(y_predicted>=0.5) = 1;
+
+disp(w);
+
+
+
 
