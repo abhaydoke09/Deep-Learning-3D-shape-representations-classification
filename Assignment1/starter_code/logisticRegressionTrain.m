@@ -89,8 +89,11 @@ for itr=1:10000
 %         disp(y_predicted);
 %     end
     output_diff = shape_labels - y_predicted;
+%     disp('Size of X and output diff');
+%     disp(size(X));
+%     disp(size(output_diff'));
     loss_gradients = -1.0*sum(X.*output_diff');
-    regularization_loss = N*lambda*sign(w);
+    regularization_loss = lambda*sign(w);
     loss_gradients(1,2:number_of_bins+1) = loss_gradients(1,2:number_of_bins+1) + regularization_loss(1,2:number_of_bins+1);
     w = w - learning_rate*loss_gradients;
 end
@@ -98,8 +101,9 @@ end
 y_predicted = 1./(1 + exp(-1*(w*X')));
 y_predicted(y_predicted<0.5) = 0;
 y_predicted(y_predicted>=0.5) = 1;
+disp('Number of correct labels');
+disp(sum(y_predicted == shape_labels));
 
-disp(w);
 
 
 
