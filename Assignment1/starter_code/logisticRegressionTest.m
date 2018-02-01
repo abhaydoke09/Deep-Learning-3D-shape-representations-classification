@@ -72,6 +72,8 @@ bias_column = ones(N,1);
 X = [bias_column X];
 
 t = 1./(1 + exp(-1*(w*X'))); % your predictions (change this!), report t values in your report!!!
+disp('t');
+disp(t);
 t(t>0.5) = 1;
 t(t<=0.5) = 0;
 test_err = 1 - (sum(t == shape_labels)/N);        % recompute this based on your predictions, report it in your report!!!
@@ -79,8 +81,6 @@ test_err = 1 - (sum(t == shape_labels)/N);        % recompute this based on your
 % ADD CODE HERE TO TEST CLASSIFIER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-disp('Correct labels');
-disp(sum(t == shape_labels));
 
 disp(shape_labels);
 fprintf('Test classification error: %.2f%%\n', test_err*100);
