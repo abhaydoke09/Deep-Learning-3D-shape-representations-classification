@@ -35,20 +35,22 @@ if ~isfield(options, 'num_hidden_nodes_per_layer')
 end
 if ~isfield(options, 'iterations')
     %options.iterations = 1000;
-    options.iterations = 1;
+    options.iterations = 100;
 end
 if ~isfield(options, 'initial_learning_rate')
-    options.learning_rate =  .5;
+    options.learning_rate =  .01;
 end
 if ~isfield(options, 'momentum')
     options.momentum =  .9;
 end
 if ~isfield(options, 'weight_decay')
-    options.weight_decay =  .001;
+    options.weight_decay =  .000001;
 end
 if ~isfield(options, 'activation')
-    options.activation =  2;
+    options.activation =  1;
     disp('Activation is different');
+else
+    options.activation =  2;
 end
 
 
@@ -67,11 +69,16 @@ fprintf('\n Learning rate: %f, Momentum: %f , Weight decay: \n', options.learnin
 
 % initialize model parameters
 for layer_id=2:model.num_layers    
-    model.param{layer_id} = .1 * randn( model.num_nodes(layer_id-1),  model.num_nodes(layer_id) ); % plus one unit (+1) for bias
+    %model.param{layer_id} = .1 * randn( model.num_nodes(layer_id-1),  model.num_nodes(layer_id) ); % plus one unit (+1) for bias
+    model.param{layer_id} = (sqrt(2/model.num_nodes(layer_id-1))) .* randn( model.num_nodes(layer_id-1),  model.num_nodes(layer_id) ); % plus one unit (+1) for bias
     % I am handling biases separetely. This helps for regularization loss
     % as well as the back propagation
-    model.biases{layer_id} = 0.01.*ones(1,model.num_nodes(layer_id));
+    model.biases{layer_id} = 0.1.*ones(1,model.num_nodes(layer_id));
+    model.param_derivatives{layer_id} = zeros( model.num_nodes(layer_id-1),  model.num_nodes(layer_id) );
+    model.bias_derivatives{layer_id} = zeros(1,model.num_nodes(layer_id));
 end
+
+
 
 % normalize (standardize) input, store mean/std in the input layer parameters
 model.param{1}.mean = mean( X );
@@ -83,45 +90,67 @@ X = X ./ repmat( model.param{1}.std+1e-6, N, 1); % 1e-6 helps avoid any division
 %% YOUR CODE goes here - change the following lines %%
 iter = 1;
 
+
+% for layer_id=1:model.num_layers
+%     disp(size(model.outputs{layer_id}));
+% end
+
+
+
 while true       
     % complete this loop for learning
     % call forwardPropagate.m, backPropagate.m appropriately, update net parameters
-       
-    model.outputs{1} = X; % the input layer provides the input data to the net
     
-    % Check if we want to use relu
-    if options.activation == 2
-        for layer_id=2:model.num_layers-1
-        %model.outputs{layer_id} = rand( N, model.num_nodes(layer_id) ); % change this (obviously)
-        model.outputs{layer_id} = relu(model.outputs{layer_id-1}*model.param{layer_id}+model.biases{layer_id});
-        end
-        model.outputs{model.num_layers} = sigmoid(model.outputs{layer_id-1}*model.param{layer_id}+model.biases{layer_id});
-    else
+    shuffle_order = randperm(size(X, 1));
+    X = X(shuffle_order, :);
+    Y = Y(shuffle_order, :);
+    
+    for layer_id=2:model.num_layers    
+        model.param_derivatives{layer_id} = model.param_derivatives{layer_id}.*0;
+        model.bias_derivatives{layer_id} = model.bias_derivatives{layer_id}.*0;
+    end
+
+    for i=1:size(X,1)
+        model.outputs{1} = X(i,:); % the input layer provides the input data to the net
+        y_temp = Y(i,:);
+        % Check if we want to use relu
+
         for layer_id=2:model.num_layers
-        %model.outputs{layer_id} = rand( N, model.num_nodes(layer_id) ); % change this (obviously)
-        model.outputs{layer_id} = sigmoid(model.outputs{layer_id-1}*model.param{layer_id}+model.biases{layer_id});
+            %model.outputs{layer_id} = rand( N, model.num_nodes(layer_id) ); % change this (obviously)
+            model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
+        end
+        
+        received_msg = model.outputs{model.num_layers} - y_temp;
+%         disp(size(received_msg));
+        for layer_id = model.num_layers:-1:2
+            %disp(sum(sum(model.param{layer_id})));
+            [received_msg, param_derivatives, bias_derivatives] = backPropagate(received_msg, layer_id, model, options.weight_decay);
+            model.param_derivatives{layer_id} = model.param_derivatives{layer_id} + param_derivatives;
+            model.param{layer_id} = model.param{layer_id} - (options.learning_rate/1.0)*param_derivatives - options.weight_decay*model.param{layer_id};
+            model.bias_derivatives{layer_id} = model.bias_derivatives{layer_id} + bias_derivatives;
+            model.biases{layer_id} = model.biases{layer_id} - (options.learning_rate/1.0)*bias_derivatives;
+            %disp(sum(sum(model.param_derivatives{layer_id})));
+            %disp(sum(sum(model.param{layer_id})));
         end
     end
-        
     
+%     for layer_id=2:model.num_layers
+%         model.param{layer_id} = model.param{layer_id} - (options.learning_rate/1.0)*model.param_derivatives{layer_id} - 0.1*model.param{layer_id};
+%         model.biases{layer_id} = model.biases{layer_id} - (options.learning_rate/1.0)*model.bias_derivatives{layer_id};
+%         %disp(sum(sum(model.param{layer_id})));
+%         %disp(sum(sum(model.param_derivatives{layer_id})));
+%     end
+    
+    model.outputs{1} = X;
     for layer_id=2:model.num_layers
-        disp('Input size');
-        disp(size(model.outputs{layer_id-1}));
-        disp('Weight size');
-        disp(size(model.param{layer_id}));
-        disp('Bias size');
-        disp(size(model.biases{layer_id}));
-    end
+        model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
+    end    
     
-    
-    disp('Final output');
-    disp(model.outputs{model.num_layers}(1:10,1));
-    
-    Yp = rand(N, 1) > .5; % change this (obviously)    
-    cost_function = cost(Y, model); % change this (obviously)
+    Yp = model.outputs{model.num_layers} > 0.5;
+    [cost_function] = cost(Y, Yp, model, options.weight_decay);
     classification_error = sum( Y ~= Yp ) / N;
     fprintf('Iteration %d, Cost function: %f, classification error: %f %%\n', iter, cost_function, classification_error * 100);
-    
+  
     iter = iter + 1;
     if iter > options.iterations
         break;

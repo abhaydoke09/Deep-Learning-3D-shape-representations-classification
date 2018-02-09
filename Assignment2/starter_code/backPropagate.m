@@ -1,4 +1,5 @@
-function [sent_msg, derivatives] = backPropagate(received_msg, layer_param, layer_output, layer_input, weight_decay, is_output_layer)
+%function [sent_msg, derivatives] = backPropagate(received_msg, layer_param, layer_output, layer_input, weight_decay, is_output_layer)
+function [sent_msg, param_derivatives, bias_derivatives] = backPropagate(received_msg, layer_id, model, weight_decay);
 % code for back propagation through a sigmoid layer
 % you need to complete this script!
 
@@ -23,10 +24,31 @@ function [sent_msg, derivatives] = backPropagate(received_msg, layer_param, laye
 
 %% YOUR CODE goes here - modify the following lines!
 
-N = size(layer_input, 1);
-Di = size(layer_input, 2);
-Do = size(layer_output, 2);
-sent_msg = zeros(N, Di);  % change this (obviously)    
-derivatives = zeros(Di+1, Do);  % change this (obviously)    
+%N = size(layer_input, 1);
+%Di = size(layer_input, 2);
+%Do = size(layer_output, 2);
+%sent_msg = zeros(N, Di);  % change this (obviously)    
+%derivatives = zeros(Di+1, Do);  % change this (obviously)  
 
+% disp(received_msg);
+% disp(size(model.outputs{layer_id-1}));
+param_derivatives = model.outputs{layer_id-1}' * received_msg;
+
+
+%param_derivatives = param_derivatives + weight_decay.*model.param{layer_id};
+% disp('Bias shapes');
+% disp(layer_id);
+% disp(size(model.biases{layer_id}))
+% disp(size(received_msg))
+bias_derivatives = sum(model.biases{layer_id} .* received_msg, 1);
+
+%disp(size(model.param{layer_id}));
+% disp(size(received_msg));
+% disp(size(model.outputs{layer_id-1}))
+sent_msg = (model.param{layer_id} * received_msg')';
+if layer_id>2
+sent_msg = sent_msg .* (model.outputs{layer_id-1} .* (1-model.outputs{layer_id-1}));
+end
+
+%disp(size(sent_msg));
 end

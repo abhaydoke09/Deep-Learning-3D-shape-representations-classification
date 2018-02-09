@@ -32,7 +32,12 @@ X = X ./ repmat( model.param{1}.std+1e-6, N, 1); % 1e-6 helps avoid any division
 %% YOUR CODE goes here - change the following lines %%
 % call forwardPropagate appropriately
 % use the output probabilities to determine the predictions (eye/not eye)
+model.outputs{1} = X;
+for layer_id=2:model.num_layers
+    model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
+end
 
-Ypred = rand(N, 1) > threshold;  % change this (obviously)    
+
+Ypred = model.outputs{model.num_layers} > threshold;  % change this (obviously)    
 
 end

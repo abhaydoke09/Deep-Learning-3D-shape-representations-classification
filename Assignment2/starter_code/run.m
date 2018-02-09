@@ -20,7 +20,9 @@ end
 
 % For extra credit. Following line will select relu instead of sigmoid for
 % all layers except the last one.
-%options.activation = 'relu';    
+%options.activation = 'relu';  
+%X = X([1,size(X,1)],:);
+%Y = Y([1,size(Y,1)],:);
 model = trainNN(X, Y);
 
 %% load the test dataset
@@ -41,7 +43,7 @@ fprintf('Test error is %.2f%%\n', 100 * err);
 
 %% check results on a 'real' image
 img = 'star_trek1.pgm';
-threshold = 0.99;
+threshold = 0.5;
 %  your model outputs a continuous value 0...1 through the topmost sigmoid
 % function. You can threshold it to decide whether you have eye or not
 % (it does not need to be 0.5, but something larger depending on the desired
