@@ -71,8 +71,6 @@ if use_ensemble
 else
     disp(size(Xtest,1));
     [Ypred,model] = testNN(model, Xtest);
-    disp(size(model.outputs{model.num_layers}));
-    disp(size(Ytest));
     [X,Y,T,AUC] = perfcurve(Ytest,model.outputs{model.num_layers},1);
     plot(X,Y);
     err = sum( Ypred ~= Ytest ) / length(Ytest);
