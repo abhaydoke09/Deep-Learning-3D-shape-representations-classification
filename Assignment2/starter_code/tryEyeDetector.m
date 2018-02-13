@@ -16,7 +16,7 @@ function tryEyeDetector(model, image_filename, window_size, threshold, corners_m
 % feel free to modify the input and output arguments if necessary
 
 if nargin == 3
-    threshold = .99;
+    threshold = .8;
 end
 
 whole_image = imread(image_filename);
@@ -77,4 +77,5 @@ hold on;
 for n=1:length(save_x)
        rectangle('Position', [save_y(n) save_x(n) window_size(2) window_size(1)], 'EdgeColor', 'g', 'LineWidth', 3 );
 end
+
 hold off;

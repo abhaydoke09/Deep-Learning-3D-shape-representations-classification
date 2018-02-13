@@ -15,7 +15,7 @@ function [ loss ] = cost( y, yp, model, weight_decay)
         regularization_loss = regularization_loss + sum(sum(model.param{layer_id}.^2));
     end
     
-    %regularization_loss = weight_decay*regularization_loss;
+    regularization_loss = weight_decay*regularization_loss;
     
     loss = cross_entropy_loss + regularization_loss;
     %disp(loss);

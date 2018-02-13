@@ -31,7 +31,7 @@ function [sent_msg, param_derivatives, bias_derivatives] = backPropagate(receive
 %derivatives = zeros(Di+1, Do);  % change this (obviously)  
 
 % disp(received_msg);
-% disp(size(model.outputs{layer_id-1}));
+%disp(size(model.outputs{layer_id-1}));
 param_derivatives = model.outputs{layer_id-1}' * received_msg;
 
 

@@ -1,4 +1,4 @@
-function Ypred = testNN(model, X, threshold)
+function [Ypred,model] = testNN(model, X, threshold, Y)
 % code for applying a neural network on new data
 % you need to complete this script!
 
@@ -21,7 +21,7 @@ function Ypred = testNN(model, X, threshold)
 % feel free to modify the input and output arguments if necessary
 
 if nargin == 2
-    threshold = .99;
+    threshold = .5;
 end
 
 % normalize (standardize) input given training mean/std dev.

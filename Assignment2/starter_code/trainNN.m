@@ -34,17 +34,16 @@ if ~isfield(options, 'num_hidden_nodes_per_layer')
     options.num_hidden_nodes_per_layer = [16 8 4];
 end
 if ~isfield(options, 'iterations')
-    %options.iterations = 1000;
-    options.iterations = 100;
+    options.iterations = 1500;
 end
 if ~isfield(options, 'initial_learning_rate')
-    options.learning_rate =  .01;
+    options.learning_rate =  0.5;
 end
 if ~isfield(options, 'momentum')
     options.momentum =  .9;
 end
 if ~isfield(options, 'weight_decay')
-    options.weight_decay =  .000001;
+    options.weight_decay =  .001;
 end
 if ~isfield(options, 'activation')
     options.activation =  1;
@@ -53,6 +52,7 @@ else
     options.activation =  2;
 end
 
+use_decay = false;
 
 %% initialize model
 disp('Input Size');
@@ -90,17 +90,9 @@ X = X ./ repmat( model.param{1}.std+1e-6, N, 1); % 1e-6 helps avoid any division
 %% YOUR CODE goes here - change the following lines %%
 iter = 1;
 
-
-% for layer_id=1:model.num_layers
-%     disp(size(model.outputs{layer_id}));
-% end
-
-
-
 while true       
-    % complete this loop for learning
-    % call forwardPropagate.m, backPropagate.m appropriately, update net parameters
     
+    % For batch gradient descent learning, shuffle the data randomly.
     shuffle_order = randperm(size(X, 1));
     X = X(shuffle_order, :);
     Y = Y(shuffle_order, :);
@@ -109,30 +101,63 @@ while true
         model.param_derivatives{layer_id} = model.param_derivatives{layer_id}.*0;
         model.bias_derivatives{layer_id} = model.bias_derivatives{layer_id}.*0;
     end
-
-    for i=1:size(X,1)
-        model.outputs{1} = X(i,:); % the input layer provides the input data to the net
-        y_temp = Y(i,:);
-        % Check if we want to use relu
-
-        for layer_id=2:model.num_layers
-            %model.outputs{layer_id} = rand( N, model.num_nodes(layer_id) ); % change this (obviously)
-            model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
-        end
-        
-        received_msg = model.outputs{model.num_layers} - y_temp;
-%         disp(size(received_msg));
-        for layer_id = model.num_layers:-1:2
-            %disp(sum(sum(model.param{layer_id})));
-            [received_msg, param_derivatives, bias_derivatives] = backPropagate(received_msg, layer_id, model, options.weight_decay);
-            model.param_derivatives{layer_id} = model.param_derivatives{layer_id} + param_derivatives;
-            model.param{layer_id} = model.param{layer_id} - (options.learning_rate/1.0)*param_derivatives - options.weight_decay*model.param{layer_id};
-            model.bias_derivatives{layer_id} = model.bias_derivatives{layer_id} + bias_derivatives;
-            model.biases{layer_id} = model.biases{layer_id} - (options.learning_rate/1.0)*bias_derivatives;
-            %disp(sum(sum(model.param_derivatives{layer_id})));
-            %disp(sum(sum(model.param{layer_id})));
-        end
+    
+    model.outputs{1} = X;
+    for layer_id=2:model.num_layers
+        model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
     end
+    
+    % I am computing the messeges emitted by the last layer here itself.
+    received_msg = model.outputs{model.num_layers} - Y;
+    
+    if use_decay
+        current_learning_rate = step_decay(options.learning_rate, 0.000, iter);
+        % I am using momentum annealing technique. Momentum is initially starts with
+        % 0.5 and keep on annealing until it reaches 0.9.
+        % Reference = http://cs231n.github.io/neural-networks-3/#sgd
+        momentum_value = 0.5 + ((0.9-0.5)/(options.iterations-1))*(iter-1);
+    else
+        current_learning_rate = options.learning_rate;
+        momentum_value = options.momentum;
+    end
+        
+    for layer_id = model.num_layers:-1:2
+        %disp(sum(sum(model.param{layer_id})));
+        [received_msg, param_derivatives, bias_derivatives] = backPropagate(received_msg, layer_id, model, options.weight_decay);
+        
+        model.param_derivatives{layer_id} = momentum_value.*model.param_derivatives{layer_id} + (current_learning_rate/N*1.0)*param_derivatives;
+        model.param{layer_id} = model.param{layer_id} - model.param_derivatives{layer_id} - options.weight_decay*model.param{layer_id};
+        
+        model.bias_derivatives{layer_id} = momentum_value.*model.bias_derivatives{layer_id} + (current_learning_rate/N*1.0)*bias_derivatives;
+        model.biases{layer_id} = model.biases{layer_id} - model.bias_derivatives{layer_id};
+        %disp(sum(sum(model.param_derivatives{layer_id})));
+        %disp(sum(sum(model.param{layer_id})));
+    end
+
+
+%     for i=1:2:size(X,1)-1
+%         model.outputs{1} = X(i:i+1,:); % the input layer provides the input data to the net
+%         y_temp = Y(i:i+1,:);
+%         % Check if we want to use relu
+% 
+%         for layer_id=2:model.num_layers
+%             %model.outputs{layer_id} = rand( N, model.num_nodes(layer_id) ); % change this (obviously)
+%             model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
+%         end
+%         
+%         received_msg = model.outputs{model.num_layers} - y_temp;
+% %         disp(size(received_msg));
+%         for layer_id = model.num_layers:-1:2
+%             %disp(sum(sum(model.param{layer_id})));
+%             [received_msg, param_derivatives, bias_derivatives] = backPropagate(received_msg, layer_id, model, options.weight_decay);
+%             model.param_derivatives{layer_id} = model.param_derivatives{layer_id} + param_derivatives;
+%             model.param{layer_id} = model.param{layer_id} - (options.learning_rate/1.0)*param_derivatives - options.weight_decay*model.param{layer_id};
+%             model.bias_derivatives{layer_id} = model.bias_derivatives{layer_id} + bias_derivatives;
+%             model.biases{layer_id} = model.biases{layer_id} - (options.learning_rate/1.0)*bias_derivatives;
+%             %disp(sum(sum(model.param_derivatives{layer_id})));
+%             %disp(sum(sum(model.param{layer_id})));
+%         end
+%     end
     
 %     for layer_id=2:model.num_layers
 %         model.param{layer_id} = model.param{layer_id} - (options.learning_rate/1.0)*model.param_derivatives{layer_id} - 0.1*model.param{layer_id};
@@ -141,12 +166,12 @@ while true
 %         %disp(sum(sum(model.param_derivatives{layer_id})));
 %     end
     
-    model.outputs{1} = X;
-    for layer_id=2:model.num_layers
-        model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
-    end    
+%     model.outputs{1} = X;
+%     for layer_id=2:model.num_layers
+%         model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
+%     end    
     
-    Yp = model.outputs{model.num_layers} > 0.5;
+    Yp = model.outputs{model.num_layers} > 0.7;
     [cost_function] = cost(Y, Yp, model, options.weight_decay);
     classification_error = sum( Y ~= Yp ) / N;
     fprintf('Iteration %d, Cost function: %f, classification error: %f %%\n', iter, cost_function, classification_error * 100);
