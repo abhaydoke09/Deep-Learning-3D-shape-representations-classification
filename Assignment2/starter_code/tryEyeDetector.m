@@ -1,4 +1,4 @@
-function tryEyeDetector(model, image_filename, window_size, threshold, corners_mat_filename)
+function tryEyeDetector(model, image_filename, window_size, threshold, activation, corners_mat_filename)
 % code for detecting eyes in an image with a ML classifier
 
 % Input:
@@ -16,7 +16,7 @@ function tryEyeDetector(model, image_filename, window_size, threshold, corners_m
 % feel free to modify the input and output arguments if necessary
 
 if nargin == 3
-    threshold = .8;
+    threshold = .999;
 end
 
 whole_image = imread(image_filename);
@@ -60,7 +60,7 @@ for c=1:size(corners, 1)
             Xtest = Xtest / (std( Xtest ) + 1e-6);
             
             % call testNN.m - you need to complete this function
-            Y = testNN(model, Xtest, threshold );
+            [Y,model] = testNN(model, Xtest, activation, threshold);
             
             % store window coordinates
             if Y == 1

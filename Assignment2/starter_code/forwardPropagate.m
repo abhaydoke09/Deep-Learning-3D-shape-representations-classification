@@ -19,7 +19,7 @@ N = size(layer_input, 1);
 Do = size( layer_param, 2);
 %layer_output = zeros(N, Do);  % change this (obviously)   
 
-if activation == 2
+if activation == 1
     layer_output = relu(layer_input*layer_param+layer_biases);
 else
     layer_output = sigmoid(layer_input*layer_param+layer_biases);

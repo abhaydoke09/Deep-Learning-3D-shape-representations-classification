@@ -1,4 +1,4 @@
-function [Ypred,model] = testNN(model, X, threshold, Y)
+function [Ypred,model] = testNN(model, X, activation, threshold, Y)
 % code for applying a neural network on new data
 % you need to complete this script!
 
@@ -20,8 +20,9 @@ function [Ypred,model] = testNN(model, X, threshold, Y)
 
 % feel free to modify the input and output arguments if necessary
 
-if nargin == 2
-    threshold = .5;
+% For reporting all classification errors, I am using threshold as 0.99
+if nargin == 3
+    threshold = .99;
 end
 
 % normalize (standardize) input given training mean/std dev.
@@ -34,7 +35,11 @@ X = X ./ repmat( model.param{1}.std+1e-6, N, 1); % 1e-6 helps avoid any division
 % use the output probabilities to determine the predictions (eye/not eye)
 model.outputs{1} = X;
 for layer_id=2:model.num_layers
-    model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
+    if layer_id == model.num_layers
+        model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 2);
+    else
+        model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, activation);
+    end
 end
 
 

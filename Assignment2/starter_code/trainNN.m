@@ -37,30 +37,26 @@ if ~isfield(options, 'iterations')
     options.iterations = 1000;
 end
 if ~isfield(options, 'initial_learning_rate')
-    options.learning_rate =  0.1;
+    options.learning_rate =  0.5;
 end
 if ~isfield(options, 'momentum')
     options.momentum =  .9;
 end
 if ~isfield(options, 'weight_decay')
-    options.weight_decay =  .0001;
+    options.weight_decay =  .001;
 end
-if ~isfield(options, 'activation')
-    options.activation =  1;
-    disp('Activation is different');
-else
-    options.activation =  2;
-end
+
 
 %####################################
 % Following options for extra credit
+% Please change it to true if you want to use a particular option
 use_decay = false;
-use_batch_gradient_descent = true;
-use_relu = false;
+use_batch_gradient_descent = false;
 
 if use_batch_gradient_descent
     options.learning_rate = 0.1;
     options.weight_decay = 0.0001;
+end
 %####################################
 
 
@@ -79,8 +75,14 @@ fprintf('\n Learning rate: %f, Momentum: %f , Weight decay: \n', options.learnin
 
 % initialize model parameters
 for layer_id=2:model.num_layers    
-    %model.param{layer_id} = .1 * randn( model.num_nodes(layer_id-1),  model.num_nodes(layer_id) ); % plus one unit (+1) for bias
-    model.param{layer_id} = (sqrt(2/model.num_nodes(layer_id-1))) .* randn( model.num_nodes(layer_id-1),  model.num_nodes(layer_id) ); % plus one unit (+1) for bias
+    model.param{layer_id} = .1 * randn( model.num_nodes(layer_id-1),  model.num_nodes(layer_id) ); % plus one unit (+1) for bias
+    
+    % If Relu neuron are used
+    % http://proceedings.mlr.press/v9/glorot10a/glorot10a.pdf this paper
+    % says that weights should be initialized n/sqrt(n), where n is the
+    % number of incoming neurons
+    %model.param{layer_id} = (sqrt(2/model.num_nodes(layer_id-1))) .* randn( model.num_nodes(layer_id-1),  model.num_nodes(layer_id) ); % plus one unit (+1) for bias
+    
     % I am handling biases separetely. This helps for regularization loss
     % as well as the back propagation
     model.biases{layer_id} = 0.1.*ones(1,model.num_nodes(layer_id));
@@ -126,32 +128,34 @@ while true
             X_batch = X(n:N,:);
             Y_batch = Y(n:N,:);
         else
-            X_batch = X(n:n+batch_size,:);
-            Y_batch = Y(n:n+batch_size,:); 
+            X_batch = X(n:n+batch_size-1,:);
+            Y_batch = Y(n:n+batch_size-1,:); 
         end
     
         model.outputs{1} = X_batch;
         for layer_id=2:model.num_layers
-            model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
+            if layer_id == model.num_layers
+                model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 2);
+            else
+                model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, options.activation);
+            end
         end
 
         % I am computing the messeges emitted by the last layer here itself.
         received_msg = model.outputs{model.num_layers} - Y_batch;
-
+        momentum_value = options.momentum;
+        current_learning_rate = options.learning_rate;
         if use_decay
-            current_learning_rate = step_decay(options.learning_rate, 0.000, iter);
+            current_learning_rate = step_decay(options.learning_rate, 0.001, iter);
             % I am using momentum annealing technique. Momentum is initially starts with
             % 0.5 and keep on annealing until it reaches 0.9.
             % Reference = http://cs231n.github.io/neural-networks-3/#sgd
             momentum_value = 0.5 + ((0.9-0.5)/(options.iterations-1))*(iter-1);
-        else
-            current_learning_rate = options.learning_rate;
-            momentum_value = options.momentum;
         end
 
         for layer_id = model.num_layers:-1:2
             %disp(sum(sum(model.param{layer_id})));
-            [received_msg, param_derivatives, bias_derivatives] = backPropagate(received_msg, layer_id, model, options.weight_decay);
+            [received_msg, param_derivatives, bias_derivatives] = backPropagate(received_msg, layer_id, model, options.weight_decay, options.activation);
 
             model.param_derivatives{layer_id} = momentum_value.*model.param_derivatives{layer_id} + (current_learning_rate/size(X_batch,1)*1.0)*param_derivatives;
             model.param{layer_id} = model.param{layer_id} - model.param_derivatives{layer_id} - options.weight_decay*model.param{layer_id};
@@ -165,9 +169,14 @@ while true
     
     model.outputs{1} = X;
     for layer_id=2:model.num_layers
-        model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 1);
+        if layer_id == model.num_layers
+            model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, 2);
+        else
+            model.outputs{layer_id} = forwardPropagate(model.outputs{layer_id-1}, model.param{layer_id}, model.biases{layer_id}, options.activation);
+        end
     end
-    Yp = model.outputs{model.num_layers} > 0.7;
+    
+    Yp = model.outputs{model.num_layers} > 0.5;
     [cost_function] = cost(Y, Yp, model, options.weight_decay);
     classification_error = sum( Y ~= Yp ) / N;
     fprintf('Iteration %d, Cost function: %f, classification error: %f %%\n', iter, cost_function, classification_error * 100);
