@@ -35,9 +35,35 @@ IF = (X-(max_dimensions(1)+min_dimensions(1))/2).^2 ...
 K = 20;
 % idx = knnsearch( points', [X(:), Y(:), Z(:)], 'K', K ); % matlab's knnsearch
 idx = knnsearch( [X(:), Y(:), Z(:)], points', K );
+id_nearest = knnsearch( points', points', 1 );
+sigma = 0;
+total_distance = 0;
+for i=1:size(points,2)
+    point1 = points(:,i);
+    point2 = points(:,id_nearest(i));
+    total_distance = total_distance + sqrt(sum((point1 - point2) .^ 2));
+end
+sigma = 2.0*total_distance/size(points,2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % write code...
+id_count = 0;
+for x = 1:size(X,3)
+    for y = 1:size(X,2)
+        for z = 1:size(X,1)
+            id_count = id_count+1;
+            neighbors = idx(id_count,:);
+            numerator = 0;
+            denominator = 0;
+            for i=1:size(neighbors,2)
+                phi = exp(-1*sum((points(:,idx(id_count,i)) - [X(z,y,x);Y(z,y,x);Z(z,y,x)]).^2)/(sigma^2));
+                numerator = numerator+dot(normals(:, idx(id_count,i)), points(:,idx(id_count,i)) - [X(z,y,x);Y(z,y,x);Z(z,y,x)])*phi;
+                denominator = denominator+phi;
+            end
+            IF(z,y,x) = numerator/denominator;
+        end
+    end
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 [mesh.F, mesh.V] = isosurface(X, Y, Z, IF, 0);
