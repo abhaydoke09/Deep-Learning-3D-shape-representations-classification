@@ -32,9 +32,37 @@ IF = (X-(max_dimensions(1)+min_dimensions(1))/2).^2 ...
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % write code...
+id_count = 0;
+
+offset_points = points + epsilon.*normals;
+total_points = [points, offset_points];
+
+N_points = size(total_points,2);
+M = zeros(N_points,N_points);
+for i=1:N_points
+    for j=1:N_points
+        M(i,j) = basis(norm(total_points(:,i) - total_points(:,j)));
+    end
+end
+d = zeros(N_points,1);
+d(N_points/2+1:N_points) = epsilon;
+
+w = inv(M)*d;
+
+for x = 1:size(X,1)
+    for y = 1:size(X,2)
+        for z = 1:size(X,3)
+            p_ck = basis(vecnorm([X(x,y,z);Y(x,y,z);Z(x,y,z)] - total_points));
+            IF(x,y,z) = p_ck*w;
+        end
+    end
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 [mesh.F, mesh.V] = isosurface(X, Y, Z, IF, 0);
 mesh.F = mesh.F';
 mesh.V = mesh.V';
 plotMesh(mesh, 'solid');
+
+

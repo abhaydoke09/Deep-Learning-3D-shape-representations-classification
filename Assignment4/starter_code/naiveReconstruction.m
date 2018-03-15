@@ -54,7 +54,7 @@ for x = 1:size(X,3)
     for y = 1:size(X,2)
         for z = 1:size(X,1)
             id_count = id_count+1;
-            IF(z,y,x) = dot(normals(:, idx(id_count)), points(:,idx(id_count)) - [X(z,y,x);Y(z,y,x);Z(z,y,x)]);
+            IF(z,y,x) = dot(normals(:, idx(id_count)), [X(z,y,x);Y(z,y,x);Z(z,y,x)] - points(:,idx(id_count)));
         end
     end
 end
