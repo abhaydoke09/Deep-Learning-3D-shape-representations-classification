@@ -25,12 +25,21 @@ x = squeeze(x(:,t,:)); % squeeze the time-step dimension
 %% YOUR CODE goes here - modify the following lines!
 
 % derivative based on chain rule
-% dWh = ?
-% dWx = ?
-% db = ?
+[N, H] = size(dnext_h);
+
+dnext_h = dnext_h.*(1 - model.state.h(:,:,t).^2);
+
+if t==1
+    dWh = 0.0;
+else
+    dWh = dnext_h' * model.state.h(:,:,t-1);
+end
+    
+dWx = x' * dnext_h;
+db = sum(dnext_h);
 
 % backward message based on chain rule
-% dprev_h = ?
+dprev_h = dnext_h * model.param.Wh;
 
 end
 

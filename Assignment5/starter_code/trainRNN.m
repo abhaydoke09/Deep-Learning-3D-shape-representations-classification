@@ -97,18 +97,27 @@ while true
         %% YOUR CODE goes here - change the following lines %%
         
         % TODO: forward propagatation
-        RNNForward(x, model); 
+        [output, model] = RNNForward(x, model); 
 
         % TODO:  back propagatation
-        % output_msg = ?
-        % RNNBackward(?);
+        output_msg = 2.0 * (output - y);
+        model = RNNBackward( output_msg, x, model, options );
 
         % TODO:  update weight matrix with momentum
-        % model.param.Wx = ?
-        % model.param.Wh = ?
-        % model.param.b = ?
-        % model.param.Wo = ?
-        % model.param.bo = ?
+        model.deriv.Wx = options.momentum * model.deriv.Wx + options.learning_rate*model.param.dWx;
+        model.param.Wx = model.param.Wx - model.deriv.Wx;
+        
+        model.deriv.Wh = options.momentum * model.deriv.Wh + options.learning_rate*model.param.dWh;
+        model.param.Wh = model.param.Wh - model.deriv.Wh;
+        
+        model.deriv.b = options.momentum * model.deriv.b + options.learning_rate*model.param.db;
+        model.param.b = model.param.b - model.deriv.b;
+        
+        model.deriv.Wo = options.momentum * model.deriv.Wo + options.learning_rate*model.param.dWo;
+        model.param.Wo = model.param.Wo - model.deriv.Wo;
+        
+        model.deriv.bo = options.momentum * model.deriv.bo + options.learning_rate*model.param.dbo;
+        model.param.bo = model.param.bo - model.deriv.bo;
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
@@ -116,8 +125,8 @@ while true
     %% YOUR CODE goes here - change the following lines %%
     
     % TODO: produce preduction for each training frame and calculate loss
-    % Y_output = ?
-    train_loss = 0; % change this line obviously
+    [output, model] = RNNForward(X_train, model); 
+    train_loss = sum(vecnorm(output - Y_train))/N; % change this line obviously
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     

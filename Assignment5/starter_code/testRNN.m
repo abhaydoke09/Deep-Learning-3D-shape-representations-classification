@@ -13,8 +13,8 @@ for test_idx=1:3
     
     %% YOUR CODE goes here - change the following lines %%    
     % produce output predictions and test loss
-    Y_output = zeros( size(y) ); ; % change this line obviously
-    test_loss = 0; % change this line obviously
+    [Y_output, model] = RNNForward(x, model) ; % change this line obviously
+    test_loss = sum(vecnorm(Y_output - y))/size(x,1); % change this line obviously
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fprintf('Test set %d, Average L2 loss: %f \n', test_idx, test_loss);
