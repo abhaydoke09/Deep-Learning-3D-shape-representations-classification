@@ -14,6 +14,33 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % fill code here 
+for iter=1:iterations
+    temp_V = zeros(size(mesh.V));
+    for i = 1:size(mesh.V,2)
+        adjV = find( mesh.Adj(i,:));
+        neighbour_count = size(adjV,2);
+        for adj_index = 1:size(adjV,2)
+            temp_V(:,i) = temp_V(:,i) + mesh.V(:,adjV(adj_index));
+        end
+        temp_V(:,i) = temp_V(:,i)./neighbour_count;
+    end
+    mesh.V = mesh.V + lambda.*(temp_V - mesh.V);
+    
+    temp_V = zeros(size(mesh.V));
+    for i = 1:size(mesh.V,2)
+        adjV = find( mesh.Adj(i,:));
+        neighbour_count = size(adjV,2);
+        for adj_index = 1:size(adjV,2)
+            temp_V(:,i) = temp_V(:,i) + mesh.V(:,adjV(adj_index));
+        end
+        temp_V(:,i) = temp_V(:,i)./neighbour_count;
+    end
+    mesh.V = mesh.V + mu.*(temp_V - mesh.V);
+    
+    clf;
+    plotMesh(mesh,'solidbw');
+    drawnow;
+end
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 % code, code, code...
