@@ -22,7 +22,7 @@ for iter=1:iterations
         end
         temp_V(:,i) = temp_V(:,i)./neighbour_count;
     end
-    mesh.V = mesh.V + lambda.*temp_V;
+    mesh.V = mesh.V + lambda.*(temp_V - mesh.V);
     clf;
     plotMesh(mesh,'solidbw');
     drawnow;
