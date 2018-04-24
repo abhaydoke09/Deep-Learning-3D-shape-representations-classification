@@ -56,18 +56,34 @@ function [E, G] = costFunction(V, mesh, W)
 %        W covariance matrix of the unary potential
 mesh.V = reshape(V, 3, size(mesh.V, 2));
 
-clf;
-plotMesh(mesh,'solidbw');
-drawnow;
+%clf;
+%plotMesh(mesh,'solidbw');
+%drawnow;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % fill code here 
 % for question 3, compute E (leave G=0)
 % for questions 4-5, compute E and G
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 E = 0; % delete this line
 G = 0; % delete this line
+
+%Computing E
+mesh = normals(mesh);
+unary_potentials = 0.0;
+% for i = 1:size(mesh.V,2)
+%     unary_potentials = unary_potentials + (mesh.originalV(:,i) - mesh.V(:,i))'*W*(mesh.originalV(:,i) - mesh.V(:,i));
+% end
+unary_potentials = sum(sum((mesh.originalV - mesh.V)'*W*(mesh.originalV - mesh.V)));
+pairwise_potentials = 0.0;
+for i = 1:size(mesh.adjF,1)
+    k = mesh.adjF(i,1);
+    j = mesh.adjF(i,2);
+    pairwise_potentials = pairwise_potentials + sum(((mesh.Nf(:,k) - mesh.Nf(:,j)).^2));
+end
+E = unary_potentials + 1.0 * pairwise_potentials;   %lambda = 1.0
 % code, code, code...
 %%%%%%%%%%%%%%%%%%%%%%%%
