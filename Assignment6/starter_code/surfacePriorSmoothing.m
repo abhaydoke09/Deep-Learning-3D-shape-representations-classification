@@ -42,7 +42,8 @@ end
 % after you finish writing the gradient, check it by setting the option 
 % DerivativeCheck 'on' (then after you verify your gradients, deactivate
 % this option - it is slow)
-options = optimset('FinDiffType', 'central', 'DerivativeCheck', 'off', 'GradObj','off', 'LargeScale','off', 'MaxIter', iterations,'TolFun', 1e-12, 'TolX', 1e-12, 'Display', 'iter-detailed');
+options = optimset('FinDiffType', 'central', 'DerivativeCheck', 'off', 'GradObj','on', 'LargeScale','off', 'MaxIter', iterations,'TolFun', 1e-12, 'TolX', 1e-12, 'Display', 'iter-detailed');
+options.MaxFunctionEvaluations = 1000000;
 V = fminunc(@(V) costFunction(V, mesh, W), mesh.V(:), options);
 mesh.V = reshape(V, 3, size(mesh.V, 2));
 
@@ -78,12 +79,35 @@ unary_potentials = 0.0;
 %     unary_potentials = unary_potentials + (mesh.originalV(:,i) - mesh.V(:,i))'*W*(mesh.originalV(:,i) - mesh.V(:,i));
 % end
 unary_potentials = sum(sum((mesh.originalV - mesh.V)'*W*(mesh.originalV - mesh.V)));
+
 pairwise_potentials = 0.0;
 for i = 1:size(mesh.adjF,1)
     k = mesh.adjF(i,1);
     j = mesh.adjF(i,2);
     pairwise_potentials = pairwise_potentials + sum(((mesh.Nf(:,k) - mesh.Nf(:,j)).^2));
 end
+
 E = unary_potentials + 1.0 * pairwise_potentials;   %lambda = 1.0
+
+%Unary gradients
+unary_grads = -2*W*(mesh.originalV - mesh.V);
+
+%Pairwise gradients
+pairwise_grads = zeros(3,100);
+for i = 1:size(mesh.V,2)
+    grads = zeros(3,1);
+    for adj = 1:size(mesh.adjF,1)
+         p = mesh.adjF(i,1);
+         m = mesh.adjF(i,2);
+         grad_npx = nxi(mesh, p, i);
+         grad_nmx = nxi(mesh, m, i);
+         grads = grads + 2 * (grad_npx - grad_nmx)' * (mesh.Nf(:,p) - mesh.Nf(:,m))/vecnorm(mesh.Nf(:,p) - mesh.Nf(:,m));
+    end
+    pairwise_grads(:,i) = grads;
+end
+
+G = unary_grads + pairwise_grads;
+
 % code, code, code...
 %%%%%%%%%%%%%%%%%%%%%%%%
+
