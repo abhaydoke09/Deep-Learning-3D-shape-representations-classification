@@ -44,7 +44,18 @@ end
 % this option - it is slow)
 options = optimset('FinDiffType', 'central', 'DerivativeCheck', 'off', 'GradObj','on', 'LargeScale','off', 'MaxIter', iterations,'TolFun', 1e-12, 'TolX', 1e-12, 'Display', 'iter-detailed');
 options.MaxFunctionEvaluations = 1000000;
-V = fminunc(@(V) costFunction(V, mesh, W), mesh.V(:), options);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% For Laplacian set this to true %%%%%
+laplacian_flag = false;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if laplacian_flag
+    V = fminunc(@(V) costFunctionLaplacian(V, mesh, W), mesh.V(:), options);
+else
+    V = fminunc(@(V) costFunction(V, mesh, W), mesh.V(:), options);
+end
+
 mesh.V = reshape(V, 3, size(mesh.V, 2));
 
 
@@ -101,13 +112,91 @@ for i = 1:size(mesh.V,2)
          m = mesh.adjF(i,2);
          grad_npx = nxi(mesh, p, i);
          grad_nmx = nxi(mesh, m, i);
-         grads = grads + 2 * (grad_npx - grad_nmx)' * (mesh.Nf(:,p) - mesh.Nf(:,m))/vecnorm(mesh.Nf(:,p) - mesh.Nf(:,m));
+         grads = grads + 2 * (grad_npx - grad_nmx)' * (mesh.Nf(:,p) - mesh.Nf(:,m));
     end
     pairwise_grads(:,i) = grads;
 end
 
 G = unary_grads + pairwise_grads;
 
+mesh.V = mesh.V - 0.001 * G;
+
 % code, code, code...
 %%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+function [E, G] = costFunctionLaplacian(V, mesh, W)
+% input: V is a vector that stores the positions of vertices
+%        mesh is your mesh structure
+%        W covariance matrix of the unary potential
+mesh.V = reshape(V, 3, size(mesh.V, 2));
+
+%clf;
+%plotMesh(mesh,'solidbw');
+%drawnow;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% fill code here 
+% for question 3, compute E (leave G=0)
+% for questions 4-5, compute E and G
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+E = 0; % delete this line
+G = 0; % delete this line
+
+%Computing E
+mesh = normals(mesh);
+unary_potentials = 0.0;
+% for i = 1:size(mesh.V,2)
+%     unary_potentials = unary_potentials + (mesh.originalV(:,i) - mesh.V(:,i))'*W*(mesh.originalV(:,i) - mesh.V(:,i));
+% end
+unary_potentials = sum(sum((mesh.originalV - mesh.V)'*W*(mesh.originalV - mesh.V)));
+
+pairwise_potentials = 0.0;
+for i = 1:size(mesh.adjF,1)
+    k = mesh.adjF(i,1);
+    j = mesh.adjF(i,2);
+    pairwise_potentials = pairwise_potentials + sum(((mesh.Nf(:,k) - mesh.Nf(:,j)).^2))^0.5;
+end
+
+E = unary_potentials + 1.0 * pairwise_potentials;   %lambda = 1.0
+
+%Unary gradients
+unary_grads = -2*W*(mesh.originalV - mesh.V);
+
+%Pairwise gradients
+pairwise_grads = zeros(3,100);
+for i = 1:size(mesh.V,2)
+    grads = zeros(3,1);
+    for adj = 1:size(mesh.adjF,1)
+         p = mesh.adjF(i,1);
+         m = mesh.adjF(i,2);
+         grad_npx = nxi(mesh, p, i);
+         grad_nmx = nxi(mesh, m, i);
+         grads = grads + (grad_npx - grad_nmx)' * (mesh.Nf(:,p) - mesh.Nf(:,m))/vecnorm(mesh.Nf(:,p) - mesh.Nf(:,m));
+    end
+    pairwise_grads(:,i) = grads;
+end
+
+G = unary_grads + pairwise_grads;
+
+mesh.V = mesh.V - 0.001 * G;
+
+% code, code, code...
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+
 
