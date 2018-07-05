@@ -2,4 +2,4 @@
 
 This is part of my course [Intelligent Visual Computing](https://people.cs.umass.edu/~kalo/courses/visual_computing/index.html) at University of Massachusetts Amherst.
 
-![Intelligent Visual Computing]()
+![Intelligent Visual Computing](./imgs/logo.jpg)
