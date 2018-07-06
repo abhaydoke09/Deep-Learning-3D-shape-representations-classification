@@ -7,5 +7,4 @@
 
 #### Reconstruction Results
 
-![Signed distance to tangent plane of the surface point nearest to each point (x,y,z) of the grid storing the implicit
-function](./imgs/1.png | width=100 | height=100)
+<img src="./imgs/1.pmg" width="200" height="200" />
