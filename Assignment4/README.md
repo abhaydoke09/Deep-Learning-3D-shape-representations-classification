@@ -7,4 +7,4 @@
 
 #### Reconstruction Results
 
-<img src="./imgs/1.pmg" width="200" height="200" />
+<img src="./imgs/1.png" width="200" height="200" />
