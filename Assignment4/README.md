@@ -7,4 +7,11 @@
 
 #### Reconstruction Results
 
+**1. Signed distance to tangent plane**
 <img src="./imgs/1.png" width="200" height="200" />
+
+**2. Moving least squares distance to tangent** 
+<img src="./imgs/2.png" width="200" height="200" />
+
+**3. Radial Basis Function (RBF) interpolation for approximating the signed distance**
+<img src="./imgs/3.png" width="200" height="200" />
