@@ -8,4 +8,4 @@
 #### Reconstruction Results
 
 ![Signed distance to tangent plane of the surface point nearest to each point (x,y,z) of the grid storing the implicit
-function](./imgs/1.png)
+function = 250x250](./imgs/1.png)
